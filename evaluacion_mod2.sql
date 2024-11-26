@@ -233,7 +233,153 @@ WHERE f.rating = 'R'
 AND f.length > 120;
 
 
+---------------------------------------------------------
 
+-- BONUS
+
+-- 18. Muestra el nombre y apellido de los actores que aparecen en más de 10 películas.
+
+-- Tablas involucradas: actor, film actor
+-- De la tabla actor necesito las columnas first_name, last,name y actor_id (en común con la tabla film_actor)
+-- De la tabla film_actor necesito las columnas: actor_id y film_id
+
+
+SELECT
+a.first_name AS Nombre,
+a.last_name AS Apellido,
+COUNT(fa.film_id) AS CantidadPeliculas
+FROM actor AS a
+INNER JOIN film_actor AS fa
+ON a.actor_id = fa.actor_id
+GROUP BY a.actor_id
+HAVING COUNT(fa.film_id) > 10;
+
+
+
+-- 19. Hay algún actor o actriz que no apareca en ninguna película en la tabla film_actor.
+
+-- Tablas involucradas: actor, film actor
+-- De la tabla actor necesito las columnas first_name, last,name y actor_id (en común con la tabla film_actor)
+-- De la tabla film_actor necesito las columnas: actor_id y film_id
+
+
+SELECT
+a.first_name AS Nombre,
+a.last_name AS Apellido
+FROM actor AS a
+LEFT JOIN film_actor AS fa
+ON a.actor_id = fa.actor_id
+GROUP BY a.actor_id
+HAVING COUNT(fa.film_id) = 0;
+
+
+
+-- 20. Encuentra las categorías de películas que tienen un promedio de duración superior a 120 minutos y muestra el nombre de la categoría 
+-- junto con el promedio de duración.
+
+-- Tablas que me interesan: film, film_category, category
+-- Columnas de la tabla film: length, film_id
+-- Columnas de la tabla film_category: film_id, category_id
+-- Columnas de la tabla category: category_id, name
+
+
+SELECT
+c.name Categoria,
+AVG(f.length) AS PromedioDuración
+FROM category AS c
+INNER JOIN film_category AS fc
+ON c.category_id = fc.category_id
+INNER JOIN film AS f
+ON fc.film_id = f.film_id
+GROUP BY c.name
+HAVING AVG(f.length) > 120;
+
+
+
+
+-- 21. Encuentra los actores que han actuado en al menos 5 películas y muestra el nombre del actor junto con la cantidad de películas en las que han actuado.
+
+-- Tablas que necesito: actor, film_actor
+-- Columnas de la tabla actor: first_name, last_name, actor_id
+-- Columnas de la tabla film_actor: actor_id, film_id
+
+SELECT
+a.first_name AS NombreActor,
+a.last_name AS ApellidoActor,
+COUNT(fa.film_id) AS CantidadPeliculas
+FROM actor AS a
+INNER JOIN film_actor AS fa
+ON a.actor_id = fa.actor_id
+GROUP BY a.actor_id
+HAVING COUNT(fa.film_id) > 5;
+
+
+-- 22. Encuentra el título de todas las películas que fueron alquiladas por más de 5 días. 
+-- Utiliza una subconsulta para encontrar los rental_ids con una duración superior a 5 días y luego selecciona las películas correspondientes.
+
+-- Tablas que necesito: rental, inventory y film
+-- Columnas de rental: inventory_id, rental_id, rental_date y return_date
+-- Columnas de inventory: film_id, inventory_id
+-- Columnas de film: film_id, title
+
+
+SELECT
+f.title AS Titulo
+FROM 
+film AS f
+INNER JOIN inventory AS i
+ON f.film_id = i.film_id
+WHERE i.inventory_id IN (
+	SELECT
+	r.inventory_id
+	FROM rental AS r
+	WHERE DATEDIFF(r.return_date, r.rental_date) > 5
+);
+
+
+
+-- OPCIÓN 2 (SIN SUBCONSULTA) pero con la columna de los días:
+
+SELECT
+f.title AS Titulo,
+DATEDIFF(r.return_date, r.rental_date) AS DiasAlquiler
+FROM film AS f
+INNER JOIN inventory AS i 
+ON f.film_id = i.film_id
+INNER JOIN rental AS r 
+ON i.inventory_id = r.inventory_id
+WHERE DATEDIFF(r.return_date, r.rental_date) > 5;
+
+
+
+
+-- 23. Encuentra el nombre y apellido de los actores que no han actuado en ninguna película de la categoría "Horror". 
+-- Utiliza una subconsulta para encontrar los actores que han actuado en películas de la categoría "Horror" y luego exclúyelos de la lista de actores.
+
+
+-- Tablas que necesito: actor, film_actor, film_category y category
+
+-- Columnas que necesito de category: name, category_id
+-- Columnas que necesito de film_category: category_id, film_id
+-- Columnas que necesito de film_actor: film_id, actor_id
+-- Columnas que necesito de actor: actor_id, first_name y last_name
+
+SELECT
+a.first_name AS Nombre,
+a.last_name AS Apellido
+FROM actor AS a
+WHERE a.actor_id NOT IN (
+	SELECT 
+	a.actor_id
+	FROM actor 
+	LEFT JOIN film_actor AS fa
+	ON a.actor_id = fa.actor_id
+	LEFT JOIN film_category AS fc
+	ON fc.film_id = fa.film_id
+	LEFT JOIN category AS c
+	ON c.category_id = fc.category_id
+	WHERE c.name = 'HORROR'
+    );
 
 
 
